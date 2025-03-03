@@ -39,6 +39,8 @@ class GUI:
             dash=(self.DASH_LENGTH, self.DASH_DISTANCE),
             width=self.LINE_WIDTH
             )
+
+        self.bob = Ball(self.window, self.canvas)
         # player 1 score = Score(paddle1, x, y)
         # player 2 score = Score(paddle2, x, y)
         # paddle1 tba
@@ -70,5 +72,52 @@ class Score:
                                                    text='Score: ',
                                                    fill='White',
                                                    anchor=CENTER)
+
+#Pedro's part.
+class Ball:
+
+    def __init__(self, window, canvas):
+        self.window = window
+        self.canvas = canvas
+
+        self.start_text = canvas.create_text(GUI.CANVAS_WIDTH / 2, 300, text="Click to start",
+                                        fill="white",
+                                        font="Times 26 italic",
+                                        anchor=CENTER)
+
+        self.x_vel = 10
+        self.y_vel = 10
+        self.after_call = None
+        self.bob = canvas.create_rectangle(self.BOX_X1, self.BOX_Y1, 200, 150, fill="white")
+        self.canvas.bind("<Button-1>", self.mouse_clicked)
+        # move_stuff()
+
+
+    def stop(self):
+
+        self.window.after_cancel(self.after_call)
+        self.canvas.delete(self.start_text)
+
+    def mouse_clicked(self, event):
+        #print(event)
+        #canvas.create_rectangle(event.x-50, event.y+50, event.x+50, event.y+50, fill=f"#{random.randint(0, 0xFFFFFF):06x}")
+
+        if self.start_text in self.canvas.find_overlapping(event.x, event.y, event.x, event.y):
+            self.move_stuff()
+
+
+    def move_stuff(self):
+        #canvas.create_rectangle(*canvas.coords(bob))
+        self.canvas.move(self.bob, self.x_vel, self.y_vel)
+        #print(canvas.coords(bob))
+
+        if self.canvas.coords(self.bob)[2] > GUI.CANVAS_WIDTH or self.canvas.coords(self.bob)[0] < 0:
+            self.x_vel = -self.x_vel
+        if self.canvas.coords(self.bob)[3] > 600 or self.canvas.coords(self.bob)[1] < 0:
+            self.y_vel = -self.y_vel
+
+        self.after_call = self.window.after(16, self.move_stuff)
+
+
 
 GUI()
