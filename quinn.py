@@ -111,15 +111,12 @@ class Ball:
 
         if self.canvas.coords(self.bob)[2] > GUI.CANVAS_WIDTH:
             self.paddle1_s += 1
-            self.canvas.move(self.bob, (GUI.CANVAS_WIDTH/2), self.BOX_Y1)
+            # Replace w with a way to get the current y value of the box and subtract from canvas height
+            self.canvas.move(self.bob, (GUI.CANVAS_WIDTH/2), (GUI.CANVAS_HEIGHT-X)
             self.canvas.itemconfig(self.score_one, text=self.paddle1_s)
         if self.canvas.coords(self.bob)[0] < 0:
             self.paddle2_s += 1
-            self.bob = self.canvas.create_rectangle(self.BOX_X1,
-                                                    self.BOX_Y1,
-                                                    self.BOX_X2,
-                                                    self.BOX_Y2,
-                                                    fill="white")
+            self.canvas.move(self.bob, -(GUI.CANVAS_WIDTH/2),  )
             self.canvas.itemconfig(self.score_two, text=self.paddle2_s)
 
         if self.canvas.coords(self.bob)[3] > 600 or self.canvas.coords(self.bob)[1] < 0:
