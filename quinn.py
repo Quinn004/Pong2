@@ -111,7 +111,7 @@ class Ball:
 
         if self.canvas.coords(self.bob)[2] > GUI.CANVAS_WIDTH:
             self.paddle1_s += 1
-            self.canvas.move(self.bob, self.BOX_X1, self.BOX_Y1)
+            self.canvas.move(self.bob, (GUI.CANVAS_WIDTH/2), self.BOX_Y1)
             self.canvas.itemconfig(self.score_one, text=self.paddle1_s)
         if self.canvas.coords(self.bob)[0] < 0:
             self.paddle2_s += 1
