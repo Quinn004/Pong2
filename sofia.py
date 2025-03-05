@@ -1,4 +1,5 @@
 # coding=utf-8
+import sys
 from tkinter import *
 
 # placing ball cde
@@ -39,7 +40,6 @@ class Paddle:
     """Create paddle."""
     WIDTH = 15
     HEIGHT = 60
-    SPEED = 4
 
     def __init__(self, window, canvas, x, y):
         """Initialize the paddle's window, canvas, x and y coordinates."""
@@ -52,6 +52,10 @@ class Paddle:
                                               y + self.HEIGHT, fill="white")
 
         self.move_paddle = None
+
+        self.max_speed = 10
+        if sys.platform == "darwin":
+            self.max_speed = 6
 
     def get_paddle_id(self):
         """Return paddle's canvas id."""
@@ -69,9 +73,12 @@ class Paddle:
             self.y_vel = 0.5
         else:
             # applies speed to paddle
-            self.y_vel = y * self.SPEED
+            self.y_vel = y * self.max_speed
 
-        self.move_paddle = self.window.after(10, lambda: self.move(y))
+        if self.move_paddle is not None and sys.platform != "darwin":
+            self.move_paddle = self.window.after(10, lambda: self.move(y))
+        else:
+            self.move_paddle = self.window.after(10, lambda: self.move(y))
 
     def stop(self):
         """Stops the active after function."""
