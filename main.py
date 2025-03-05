@@ -1,9 +1,9 @@
-import sys
+"""This file creates a pong game inside a Tkinter window."""
 from tkinter import *
 
 
 class GUI:
-    """"""
+    """Create Tkinter window and initialise all instances."""
 
     # canvas parameters
     CANVAS_HEIGHT = 600
@@ -29,6 +29,7 @@ class GUI:
     PADDLE_TWO_Y = 150
 
     def __init__(self):
+        """Initialise all instances and create Tk window."""
         # Tkinter elements
         self.window = Tk()
         self.canvas = Canvas(self.window,
@@ -53,33 +54,51 @@ class GUI:
         self.window.bind('<KeyPress>', self.pressed)
         self.window.bind('<KeyRelease>', self.released)
 
-        self.paddle_one = Paddle(self.window, self.canvas, self.PADDLE_ONE_X,
-                            self.PADDLE_ONE_Y)
-        self.paddle_two = Paddle(self.window, self.canvas, self.PADDLE_TWO_X,
-                            self.PADDLE_TWO_Y)
+        # Creates the paddles
+        self.paddle_one = Paddle(self.window, self.canvas,
+                                 self.PADDLE_ONE_X,
+                                 self.PADDLE_ONE_Y)
+        self.paddle_two = Paddle(self.window, self.canvas,
+                                 self.PADDLE_TWO_X,
+                                 self.PADDLE_TWO_Y)
 
         # Begins the window
         self.window.mainloop()
 
     def pressed(self, event):
+        """Detect when a key is pressed and move paddle."""
+        # Detect which key is pressed
         key = event.keysym
         if key == "w":
             self.paddle_one.move(-1)
         if key == "Up":
             self.paddle_two.move(-1)
-        if key == "s" :
+        if key == "s":
             self.paddle_one.move(1)
         if key == "Down":
             self.paddle_two.move(1)
 
     def released(self, _event):
-        self.paddle_one.stop()
+        """Detect when key is pressed and stop paddle."""
+        # Detect which key is pressed
+        key = _event.keysym
+        if key == "w":
+            self.paddle_one.stop()
+        if key == "Up":
+            self.paddle_two.stop()
+        if key == "s":
+            self.paddle_one.stop()
+        if key == "Down":
+            self.paddle_two.stop()
 
 
 class Paddle:
     """Create paddle."""
+
     WIDTH = 15
     HEIGHT = 60
+
+    MAX_SPEED = 10
 
     def __init__(self, window, canvas, x, y):
         """Initialize the paddle's window, canvas, x and y coordinates."""
@@ -89,47 +108,46 @@ class Paddle:
         self.score = 0
 
         self.paddle_id = canvas.create_rectangle(x, y, x + self.WIDTH,
-                                              y + self.HEIGHT, fill="white")
+                                                 y + self.HEIGHT,
+                                                 fill="white")
 
         self.move_paddle = None
 
-        self.max_speed = 10
-        if sys.platform == "darwin":
-            self.max_speed = 6
+        self.max_speed = self.MAX_SPEED
 
     def get_paddle_id(self):
         """Return paddle's canvas id."""
         return self.paddle_id
 
     def move(self, y):
-        """Moves the paddle."""
+        """Move the paddle."""
         # moves the paddle in the y-axis
         self.canvas.move(self.paddle_id, 0, self.y_vel)
 
         # checks whether paddle is at window boundary
-        if self.canvas.coords(self.paddle_id)[3] > GUI.CANVAS_HEIGHT:
+        if self.canvas.coords(self.paddle_id)[3] >= GUI.CANVAS_HEIGHT:
             self.y_vel = -0.5
-        elif self.canvas.coords(self.paddle_id)[1] < 0:
+        elif self.canvas.coords(self.paddle_id)[1] <= 0:
             self.y_vel = 0.5
         else:
             # applies speed to paddle
             self.y_vel = y * self.max_speed
 
-        if self.move_paddle is not None and sys.platform != "darwin":
-            self.move_paddle = self.window.after(10, lambda: self.move(y))
-        else:
-            self.move_paddle = self.window.after(10, lambda: self.move(y))
+        if self.move_paddle is None:
+            self.move_paddle = self.window.after(10,
+                                                 lambda: self.move(y))
 
     def stop(self):
-        """Stops the active after function."""
+        """Stop the active after function."""
         # checks if there is an after function active before canceling it
         if self.move_paddle is not None:
             self.window.after_cancel(self.move_paddle)
             self.move_paddle = None
 
 
-#Pedro's part.
+# Pedro's part.
 class Ball:
+    """Create and move the ball."""
 
     # Box dimensions
     BOX_X1 = (GUI.CANVAS_WIDTH / 2) - 10
@@ -137,16 +155,15 @@ class Ball:
     BOX_Y1 = (GUI.CANVAS_HEIGHT / 2) - 10
     BOX_Y2 = (GUI.CANVAS_HEIGHT / 2) + 10
     # Box Speed
-    X_SPEED = 5
-    Y_SPEED = 5
+    X_SPEED = 2
+    Y_SPEED = 2
     # Score variables
     SCORE1_X = 20
     SCORE2_X = GUI.CANVAS_WIDTH - 20
     SCORE_Y = 15
 
-
-
     def __init__(self, window, canvas):
+        """Initialise ball and decide its movement."""
         # Pull from GUI class
         self.window = window
         self.canvas = canvas
@@ -177,16 +194,15 @@ class Ball:
         self.move_stuff()
 
     def start_place(self):
+        """Return ball to original location."""
         # retrieves ball's current coordinates
         x, y, *_ = self.canvas.bbox(self.bob)
         self.canvas.move(self.bob, (GUI.CANVAS_WIDTH / 2) - x,
                          (GUI.CANVAS_HEIGHT / 2) - y)
 
     def move_stuff(self):
-        #canvas.create_rectangle(*canvas.coords(bob))
+        """Move ball."""
         self.canvas.move(self.bob, self.x_vel, self.y_vel)
-        #print(canvas.coords(bob))
-
 
         # Boundary/collision
         if self.canvas.coords(self.bob)[2] > GUI.CANVAS_WIDTH:
@@ -200,12 +216,12 @@ class Ball:
             self.start_place()
             self.canvas.itemconfig(self.score_two, text=self.paddle2_s)
 
-        if self.canvas.coords(self.bob)[3] > 600 or self.canvas.coords(self.bob)[1] < 0:
-          self.y_vel = -self.y_vel
+        if (self.canvas.coords(self.bob)[3] > 600 or
+                self.canvas.coords(self.bob)[1] < 0):
+            self.y_vel = -self.y_vel
 
         # Update method
         self.after_call = self.window.after(16, self.move_stuff)
-
 
 
 GUI()
