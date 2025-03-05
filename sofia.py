@@ -1,6 +1,12 @@
 # coding=utf-8
 from tkinter import *
 
+# placing ball cde
+def start_place(self):
+    # retrievs ball's current coordinates
+    x,y, *_ = self.canvas.bbox(self.bob)
+    self.canvas.move(self.bob, (GUI.CANVAS_WIDTH / 2) - x, (GUI.CANVAS_HEIGHT / 2) - y)
+
 class GUI:
     WIDTH = 600
     HEIGHT = 600
