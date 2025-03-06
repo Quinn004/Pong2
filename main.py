@@ -84,9 +84,9 @@ class GUI:
         curr_controls = self.paddle_controls[curr_paddle]
 
         if key == curr_controls[0]:
-            curr_paddle.y_vel = -curr_paddle.max_speed
+            curr_paddle.y_vel = -curr_paddle.MAX_SPEED
         if key == curr_controls[1]:
-            curr_paddle.y_vel = curr_paddle.max_speed
+            curr_paddle.y_vel = curr_paddle.MAX_SPEED
 
     def released(self, event):
         """Detect when key is pressed and stop paddle."""
@@ -137,8 +137,6 @@ class Paddle:
 
         self.move_paddle = None
 
-        self.max_speed = self.MAX_SPEED
-
         self.move()
 
     def get_paddle_id(self):
@@ -173,6 +171,7 @@ class Paddle:
         coll = list(coll)
         coll.remove(self.paddle_id)
         if len(coll) != 0:
+            self.window.after(100)
             return True
         return False
 
@@ -190,9 +189,9 @@ class Ball:
     X_SPEED = 2
     Y_SPEED = 2
     # Score variables
-    SCORE1_X = 20
-    SCORE2_X = GUI.CANVAS_WIDTH - 20
-    SCORE_Y = 15
+    SCORE1_X = 40
+    SCORE2_X = GUI.CANVAS_WIDTH - 40
+    SCORE_Y = 30
 
     def __init__(self, window, canvas):
         """Initialise ball and decide its movement."""
@@ -216,12 +215,15 @@ class Ball:
                                                  self.SCORE_Y,
                                                  text=f'{self.paddle1_s}',
                                                  fill='White',
+                                                 font='Monoton 26',
                                                  anchor=CENTER)
         self.score_two = self.canvas.create_text(self.SCORE2_X,
                                                  self.SCORE_Y,
                                                  text=f'{self.paddle2_s}',
                                                  fill='White',
+                                                 font='Monoton 26',
                                                  anchor=CENTER)
+        self.test = self.canvas.create_text(300, 300, text=f'{self.x_vel}', fill='White')
         # call update method
         self.move_stuff()
 
@@ -247,7 +249,7 @@ class Ball:
             self.x_vel = -self.x_vel
             self.start_place()
             self.canvas.itemconfig(self.score_two, text=self.paddle2_s)
-
+        # Reflect if hit y walls
         if (self.canvas.coords(self.bob)[3] > 600 or
                 self.canvas.coords(self.bob)[1] < 0):
             self.y_vel = -self.y_vel
@@ -257,7 +259,14 @@ class Ball:
 
     def bounce(self):
         """Reflect ball's trajectory."""
+        if self.x_vel < 0:
+            self.x_vel -= 0.5
+        else:
+            self.x_vel += 0.5
+
         self.x_vel = -self.x_vel
+        self.y_vel = -self.y_vel
+        self.canvas.itemconfig(self.test, text=f'{self.x_vel}')
 
 
 GUI()
