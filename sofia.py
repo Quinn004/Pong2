@@ -1,5 +1,6 @@
 # coding=utf-8
 """This file creates a pong game inside a Tkinter window."""
+import random
 from tkinter import *
 
 
@@ -21,9 +22,9 @@ class GUI:
 
     # Paddle Setup
     _PADDLE_ONE_X = 50
-    _PADDLE_ONE_Y = 150
-    _PADDLE_TWO_X = 550
-    _PADDLE_TWO_Y = 150
+    _PADDLE_ONE_Y = CANVAS_HEIGHT / 2
+    _PADDLE_TWO_X = CANVAS_HEIGHT - 50
+    _PADDLE_TWO_Y = CANVAS_HEIGHT / 2
 
     def __init__(self):
         """Initialise all instances and create Tk window."""
@@ -59,8 +60,10 @@ class GUI:
                                   self._PADDLE_TWO_X,
                                   self._PADDLE_TWO_Y)
 
-        self._paddle_controls = {self._paddle_one: ['w', 's'],
-                                 self._paddle_two: ['Up', 'Down']}
+        self._paddle_controls = {self._paddle_one: {'UP': 'w',
+                                                    'DOWN': 's'},
+                                 self._paddle_two: {'UP': 'Up',
+                                                    'DOWN': 'Down'}}
 
         self.check_collisions()
         # Begins the window
@@ -72,14 +75,15 @@ class GUI:
         key = event.keysym
         curr_paddle = self._paddle_one
 
-        if key in self._paddle_controls[self._paddle_two]:
+        if key in self._paddle_controls[self._paddle_two].values():
             curr_paddle = self._paddle_two
 
         curr_controls = self._paddle_controls[curr_paddle]
 
-        if key == curr_controls[0]:
+        # adjust paddle speed depending on up or down key pressed
+        if key == curr_controls['UP']:
             curr_paddle.set_paddle_y_vel(-Paddle.MAX_SPEED)
-        if key == curr_controls[1]:
+        if key == curr_controls['DOWN']:
             curr_paddle.set_paddle_y_vel(Paddle.MAX_SPEED)
 
     def released(self, event):
@@ -88,30 +92,32 @@ class GUI:
         key = event.keysym
         curr_paddle = self._paddle_one
 
-        if key in self._paddle_controls[self._paddle_two]:
+        if key in self._paddle_controls[self._paddle_two].values():
             curr_paddle = self._paddle_two
 
         curr_paddle.stop()
 
     def check_collisions(self):
         """Check for collisions between ball and paddles."""
-        paddles = [self._paddle_one.collided(), self._paddle_two.collided()]
+        ball_id = self._bob.get_ball_id()
+        paddle_collided = [self._paddle_one.collided(ball_id),
+                           self._paddle_two.collided(ball_id)]
         collided = False
 
-        if any(paddles) is True:
+        if any(paddle_collided) is True:
             collided = True
 
         if collided:
             self._bob.bounce()
 
-        self._window.after(1, self.check_collisions)
+        self._window.after(10, self.check_collisions)
 
 
 class Paddle:
     """Create paddle."""
 
-    WIDTH = 15
-    HEIGHT = 60
+    _WIDTH = 15
+    _HEIGHT = 60
 
     MAX_SPEED = 6
 
@@ -124,8 +130,8 @@ class Paddle:
         self._x = x
         self._y = y
 
-        self._paddle_id = canvas.create_rectangle(x, y, x + self.WIDTH,
-                                                  y + self.HEIGHT,
+        self._paddle_id = canvas.create_rectangle(x, y, x + self._WIDTH,
+                                                  y + self._HEIGHT,
                                                   fill="white")
 
         self._move_paddle = None
@@ -137,6 +143,7 @@ class Paddle:
         return self._paddle_id
 
     def set_paddle_y_vel(self, new_y_vel):
+        """Set the y-velocity of the paddle."""
         self._y_vel = new_y_vel
 
     def move(self):
@@ -144,14 +151,15 @@ class Paddle:
         self._y += self._y_vel
 
         # checks if paddle hits the bottom or top of canvas, halts movements
-        if self._y + self.HEIGHT > GUI.CANVAS_HEIGHT:
-            self._y = GUI.CANVAS_HEIGHT - self.HEIGHT
+        if self._y + self._HEIGHT > GUI.CANVAS_HEIGHT:
+            self._y = GUI.CANVAS_HEIGHT - self._HEIGHT
         elif self._y < 0:
             self._y = 0
 
         # shifts the paddles based on the new y value
-        self._canvas.coords(self._paddle_id, self._x, self._y, self._x + self.WIDTH,
-                            self._y + self.HEIGHT)
+        self._canvas.coords(self._paddle_id, self._x, self._y,
+                            self._x + self._WIDTH,
+                            self._y + self._HEIGHT)
 
         self._window.after(10, self.move)
 
@@ -160,14 +168,17 @@ class Paddle:
         # sets the y velocity to 0 to stop paddle from moving
         self._y_vel = 0
 
-    def collided(self):
+    def collided(self, canvas_id):
         """Check whether any object has collided with the paddle."""
         p = self._canvas.coords(self._paddle_id)
         coll = self._canvas.find_overlapping(p[0], p[1], p[2], p[3])
-        # compiles a list of overlapping canvas objects
+        # compiles a list of canvas objects overlapping with the paddles
         coll = list(coll)
         coll.remove(self._paddle_id)
-        if len(coll) != 0:
+
+        # checks if a collision has occurred and if it is with the ball
+        if len(coll) != 0 and canvas_id in coll:
+            self._window.after(100)
             return True
         return False
 
@@ -177,17 +188,19 @@ class Ball:
     """Create and move the ball."""
 
     # Box dimensions
-    BOX_X1 = (GUI.CANVAS_WIDTH / 2) - 10
-    BOX_X2 = (GUI.CANVAS_WIDTH / 2) + 10
-    BOX_Y1 = (GUI.CANVAS_HEIGHT / 2) - 10
-    BOX_Y2 = (GUI.CANVAS_HEIGHT / 2) + 10
+    _BOX_X1 = (GUI.CANVAS_WIDTH / 2) - 10
+    _BOX_X2 = (GUI.CANVAS_WIDTH / 2) + 10
+    _BOX_Y1 = (GUI.CANVAS_HEIGHT / 2) - 10
+    _BOX_Y2 = (GUI.CANVAS_HEIGHT / 2) + 10
     # Box Speed
-    X_SPEED = 2
-    Y_SPEED = 2
+    _X_SPEED = 2
+    _Y_SPEED = 2
+    _MAX_X_SPEED = 7
+    _MAX_Y_SPEED = 7
     # Score variables
-    SCORE1_X = 20
-    SCORE2_X = GUI.CANVAS_WIDTH - 20
-    SCORE_Y = 15
+    _SCORE1_X = 40
+    _SCORE2_X = GUI.CANVAS_WIDTH - 35
+    _SCORE_Y = 30
 
     def __init__(self, window, canvas):
         """Initialise ball and decide its movement."""
@@ -195,30 +208,36 @@ class Ball:
         self._window = window
         self._canvas = canvas
         # Box movement elements
-        self._x_vel = self.X_SPEED
-        self._y_vel = self.Y_SPEED
+        self._x_vel = self._X_SPEED
+        self._y_vel = self._Y_SPEED
         self._after_call = None
-        self._bob = canvas.create_rectangle(self.BOX_X1,
-                                            self.BOX_Y1,
-                                            self.BOX_X2,
-                                            self.BOX_Y2,
+        self._bob = canvas.create_rectangle(self._BOX_X1,
+                                            self._BOX_Y1,
+                                            self._BOX_X2,
+                                            self._BOX_Y2,
                                             fill="white")
         # Score elements
         self._paddle1_s = 0
         self._paddle2_s = 0
         # Creates the scores
-        self._score_one = self._canvas.create_text(self.SCORE1_X,
-                                                   self.SCORE_Y,
+        self._score_one = self._canvas.create_text(self._SCORE1_X,
+                                                   self._SCORE_Y,
                                                    text=f'{self._paddle1_s}',
                                                    fill='White',
+                                                   font='Monoton 26',
                                                    anchor=CENTER)
-        self._score_two = self._canvas.create_text(self.SCORE2_X,
-                                                   self.SCORE_Y,
+        self._score_two = self._canvas.create_text(self._SCORE2_X,
+                                                   self._SCORE_Y,
                                                    text=f'{self._paddle2_s}',
                                                    fill='White',
+                                                   font='Monoton 26',
                                                    anchor=CENTER)
         # call update method
         self.move_stuff()
+
+    def get_ball_id(self):
+        """Return canvas id of ball."""
+        return self._bob
 
     def start_place(self):
         """Return ball to original location."""
@@ -226,6 +245,8 @@ class Ball:
         x, y, *_ = self._canvas.bbox(self._bob)
         self._canvas.move(self._bob, (GUI.CANVAS_WIDTH / 2) - x,
                           (GUI.CANVAS_HEIGHT / 2) - y)
+        # restarts y-velocity
+        self._y_vel = 0
 
     def move_stuff(self):
         """Move ball."""
@@ -252,12 +273,27 @@ class Ball:
 
     def bounce(self):
         """Reflect ball's trajectory."""
-        if 0 < self._x_vel < 6:
-            self._x_vel += 0.005
-        elif -6 < self._x_vel < 0:
-            self._x_vel -= 0.005
+        # boost_y adds y_vel when it decreases to 0
+        boost_y = random.randrange(-self._MAX_Y_SPEED, self._Y_SPEED)
+        speed_increment = 0.5
 
+        # checks if speed within max then increments according to no signs
+        if 0 < self._x_vel < self._MAX_X_SPEED:
+            self._x_vel += speed_increment
+        elif -self._MAX_X_SPEED < self._x_vel < 0:
+            self._x_vel -= speed_increment
+
+        # reverses trajectory
         self._x_vel = -self._x_vel
-        self._y_vel = -self._y_vel
+
+        # adds velocity to the ball when it reaches 0
+        if self._y_vel == 0:
+            self._y_vel += boost_y
+        # varies the y-velocity of the ball
+        elif self._y_vel > 0:
+            self._y_vel = random.randrange(-self._y_vel, self._y_vel)
+        else:
+            self._y_vel = random.randrange(self._y_vel, -self._y_vel)
+
 
 GUI()
