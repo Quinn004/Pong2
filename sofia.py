@@ -188,10 +188,11 @@ class Ball:
     """Create and move the ball."""
 
     # Box dimensions
-    _BOX_X1 = (GUI.CANVAS_WIDTH / 2) - 10
-    _BOX_X2 = (GUI.CANVAS_WIDTH / 2) + 10
-    _BOX_Y1 = (GUI.CANVAS_HEIGHT / 2) - 10
-    _BOX_Y2 = (GUI.CANVAS_HEIGHT / 2) + 10
+    _BOX_SIZE = 10
+    _BOX_X1 = (GUI.CANVAS_WIDTH / 2) - _BOX_SIZE
+    _BOX_X2 = (GUI.CANVAS_WIDTH / 2) + _BOX_SIZE
+    _BOX_Y1 = (GUI.CANVAS_HEIGHT / 2) - _BOX_SIZE
+    _BOX_Y2 = (GUI.CANVAS_HEIGHT / 2) + _BOX_SIZE
     # Box Speed
     _X_SPEED = 2
     _Y_SPEED = 2
@@ -239,14 +240,32 @@ class Ball:
         """Return canvas id of ball."""
         return self._bob
 
-    def start_place(self):
-        """Return ball to original location."""
+    def place_ball(self, new_x,  new_y):
+        """Place ball at x and y."""
         # retrieves ball's current coordinates
         x, y, *_ = self._canvas.bbox(self._bob)
-        self._canvas.move(self._bob, (GUI.CANVAS_WIDTH / 2) - x,
-                          (GUI.CANVAS_HEIGHT / 2) - y)
-        # restarts y-velocity
+        self._canvas.move(self._bob, new_x - x, new_y - y)
+
+    def restart(self):
+        """Return ball to start location with a 3s delay before resuming."""
+        # places ball in middle of screen
+        self.place_ball((GUI.CANVAS_WIDTH / 2) - self._BOX_SIZE,
+                        (GUI.CANVAS_HEIGHT / 2))
+
+        # saves original x velocity for game resume
+        original_x_vel: int = self._x_vel
+
+        # stops movement of ball
+        self._x_vel = 0
         self._y_vel = 0
+        # delay to resuming the game
+        self._window.after(1000,
+                           lambda: self.play_after_restart(original_x_vel))
+
+    def play_after_restart(self, x_vel):
+        """Resume game."""
+        # sets x-velocity to original
+        self._x_vel = x_vel
 
     def move_stuff(self):
         """Move ball."""
@@ -256,12 +275,12 @@ class Ball:
         if self._canvas.coords(self._bob)[2] > GUI.CANVAS_WIDTH:
             self._paddle1_s += 1
             self._x_vel = -self._x_vel
-            self.start_place()
+            self.restart()
             self._canvas.itemconfig(self._score_one, text=self._paddle1_s)
         if self._canvas.coords(self._bob)[0] < 0:
             self._paddle2_s += 1
             self._x_vel = -self._x_vel
-            self.start_place()
+            self.restart()
             self._canvas.itemconfig(self._score_two, text=self._paddle2_s)
 
         if (self._canvas.coords(self._bob)[3] > 600 or
